@@ -1,0 +1,73 @@
+services:
+  - type: web
+    name: reachinbox-api
+    runtime: node
+    rootDir: .
+    buildCommand: npm install && npm run db:generate && npm --workspace apps/backend run prisma:deploy && npm run build:backend
+    startCommand: npm --workspace apps/backend run start:api
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: API_URL
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_CALLBACK_URL
+        sync: false
+      - key: SLACK_CLIENT_ID
+        sync: false
+      - key: SLACK_CLIENT_SECRET
+        sync: false
+      - key: SLACK_REDIRECT_URI
+        sync: false
+      - key: ELASTICSEARCH_URL
+        sync: false
+      - key: ELASTICSEARCH_API_KEY
+        sync: false
+      - key: ETHEREAL_USER
+        sync: false
+      - key: ETHEREAL_PASSWORD
+        sync: false
+      - key: BULL_BOARD_USERNAME
+        sync: false
+      - key: BULL_BOARD_PASSWORD
+        sync: false
+  - type: worker
+    name: reachinbox-worker
+    runtime: node
+    rootDir: .
+    buildCommand: npm install && npm run db:generate && npm --workspace apps/backend run prisma:deploy && npm run build:backend
+    startCommand: npm --workspace apps/backend run start:worker
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ELASTICSEARCH_URL
+        sync: false
+      - key: ELASTICSEARCH_API_KEY
+        sync: false
+      - key: ETHEREAL_USER
+        sync: false
+      - key: ETHEREAL_PASSWORD
+        sync: false
+      - key: MAX_EMAILS_PER_HOUR
+        value: "200"
+      - key: MIN_EMAIL_DELAY_MS
+        value: "2000"
+      - key: WORKER_CONCURRENCY
+        value: "5"

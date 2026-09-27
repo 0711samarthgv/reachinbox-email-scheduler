@@ -1,0 +1,21 @@
+{
+  "name": "reachinbox-email-scheduler",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": ["apps/backend", "apps/frontend"],
+  "scripts": {
+    "dev": "concurrently -n api,worker,web -c blue,magenta,green \"npm:dev:api\" \"npm:dev:worker\" \"npm:dev:web\"",
+    "dev:api": "npm --workspace apps/backend run dev:api",
+    "dev:worker": "npm --workspace apps/backend run dev:worker",
+    "dev:web": "npm --workspace apps/frontend run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "npm --workspace apps/backend run build",
+    "build:frontend": "npm --workspace apps/frontend run build",
+    "db:generate": "npm --workspace apps/backend run prisma:generate",
+    "db:migrate": "npm --workspace apps/backend run prisma:migrate",
+    "db:studio": "npm --workspace apps/backend run prisma:studio"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
