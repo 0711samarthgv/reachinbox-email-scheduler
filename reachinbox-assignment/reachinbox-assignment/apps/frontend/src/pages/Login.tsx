@@ -1,8 +1,146 @@
 import { useEffect, useState } from 'react';
 import { API_URL, api } from '../lib/api';
-export function Login(){
- const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [name,setName]=useState('');const [signup,setSignup]=useState(false);const [error,setError]=useState('');const [loading,setLoading]=useState(false);
- useEffect(()=>{api.me().then(()=>location.href='/app').catch(()=>{});},[]);
- const submit=async()=>{setError('');try{setLoading(true);if(signup)await api.register(name,email,password);else await api.login(email,password);location.href='/app'}catch(e:any){setError(e.message)}finally{setLoading(false)}};
- return <div className="flex min-h-screen items-center justify-center bg-white"><div className="w-[620px] rounded-2xl border border-slate-200 px-[72px] py-[65px] shadow-sm"><h1 className="text-center text-[48px] font-semibold">Login</h1><button onClick={()=>location.href=`${API_URL}/api/auth/google`} className="mt-10 flex w-full items-center justify-center gap-3 rounded-xl bg-[#e3f6eb] py-4 text-[19px]"><span className="font-bold text-[#4285f4]">G</span>Login with Google</button><div className="my-7 flex items-center gap-5 text-slate-400"><span className="h-px flex-1 bg-slate-200"/>or {signup?'sign up':'sign in'} through email<span className="h-px flex-1 bg-slate-200"/></div>{signup&&<input value={name} onChange={e=>setName(e.target.value)} placeholder="Name" className="mb-4 w-full rounded-xl bg-[#f3f6f4] px-6 py-5 outline-none"/>}<input value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email ID" className="mb-4 w-full rounded-xl bg-[#f3f6f4] px-6 py-5 outline-none"/><input value={password} onChange={e=>setPassword(e.target.value)} placeholder="Password" type="password" className="mb-8 w-full rounded-xl bg-[#f3f6f4] px-6 py-5 outline-none"/><button disabled={loading} onClick={submit} className="w-full rounded-xl bg-[#00ad45] py-4 text-lg text-white disabled:opacity-50">{loading?'Please wait...':signup?'Sign up':'Login'}</button>{error&&<div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}<button onClick={()=>setSignup(!signup)} className="mt-5 w-full text-sm text-slate-500 underline">{signup?'Already have an account? Login':'Need an account? Sign up'}</button></div></div>
+
+export function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [signup, setSignup] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showEdgeNotice, setShowEdgeNotice] = useState(false);
+
+  useEffect(() => {
+    api.me()
+      .then(() => (location.href = '/app'))
+      .catch(() => {});
+
+    // Show Edge recommendation only for non-Edge browsers
+    const isEdge = /Edg\//.test(navigator.userAgent);
+
+    if (!isEdge) {
+      setShowEdgeNotice(true);
+    }
+  }, []);
+
+  const submit = async () => {
+    setError('');
+
+    try {
+      setLoading(true);
+
+      if (signup) {
+        await api.register(name, email, password);
+      } else {
+        await api.login(email, password);
+      }
+
+      location.href = '/app';
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-white">
+      <div className="w-[620px] rounded-2xl border border-slate-200 px-[72px] py-[65px] shadow-sm">
+
+        <h1 className="text-center text-[48px] font-semibold">
+          Login
+        </h1>
+
+        {/* Edge recommendation */}
+        {showEdgeNotice && (
+          <div className="mt-6 flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div>
+              <span className="font-semibold">
+                Recommended browser:
+              </span>{' '}
+              Please use Microsoft Edge for the best experience.
+            </div>
+
+            <button
+              onClick={() => setShowEdgeNotice(false)}
+              className="ml-4 text-lg font-medium text-amber-700 hover:text-amber-900"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        <button
+          onClick={() =>
+            (location.href = `${API_URL}/api/auth/google`)
+          }
+          className="mt-10 flex w-full items-center justify-center gap-3 rounded-xl bg-[#e3f6eb] py-4 text-[19px]"
+        >
+          <span className="font-bold text-[#4285f4]">
+            G
+          </span>
+          Login with Google
+        </button>
+
+        <div className="my-7 flex items-center gap-5 text-slate-400">
+          <span className="h-px flex-1 bg-slate-200" />
+          or {signup ? 'sign up' : 'sign in'} through email
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        {signup && (
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Name"
+            className="mb-4 w-full rounded-xl bg-[#f3f6f4] px-6 py-5 outline-none"
+          />
+        )}
+
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email ID"
+          className="mb-4 w-full rounded-xl bg-[#f3f6f4] px-6 py-5 outline-none"
+        />
+
+        <input
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          type="password"
+          className="mb-8 w-full rounded-xl bg-[#f3f6f4] px-6 py-5 outline-none"
+        />
+
+        <button
+          disabled={loading}
+          onClick={submit}
+          className="w-full rounded-xl bg-[#00ad45] py-4 text-lg text-white disabled:opacity-50"
+        >
+          {loading
+            ? 'Please wait...'
+            : signup
+              ? 'Sign up'
+              : 'Login'}
+        </button>
+
+        {error && (
+          <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        <button
+          onClick={() => setSignup(!signup)}
+          className="mt-5 w-full text-sm text-slate-500 underline"
+        >
+          {signup
+            ? 'Already have an account? Login'
+            : 'Need an account? Sign up'}
+        </button>
+
+      </div>
+    </div>
+  );
 }
