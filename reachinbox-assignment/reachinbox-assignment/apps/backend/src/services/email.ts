@@ -4,9 +4,7 @@ import nodemailer, {
 
 import { env } from '../config/env';
 
-let transporter:
-  | Transporter
-  | null = null;
+let transporter: Transporter | null = null;
 
 let account: {
   user: string;
@@ -23,59 +21,54 @@ export async function getTransporter() {
     env.ETHEREAL_PASSWORD
   ) {
     account = {
-      user:
-        env.ETHEREAL_USER,
-
-      pass:
-        env.ETHEREAL_PASSWORD,
+      user: env.ETHEREAL_USER,
+      pass: env.ETHEREAL_PASSWORD,
     };
 
-    transporter =
-      nodemailer.createTransport({
-        host:
-          env.ETHEREAL_HOST,
+    transporter = nodemailer.createTransport({
+      host: env.ETHEREAL_HOST,
+      port: env.ETHEREAL_PORT,
+      secure: env.ETHEREAL_PORT === 465,
 
-        port:
-          env.ETHEREAL_PORT,
+      auth: account,
 
-        secure:
-          env.ETHEREAL_PORT ===
-          465,
+      // SMTP connection reliability
+      connectionTimeout: 30000,
+      greetingTimeout: 30000,
+      socketTimeout: 60000,
 
-        auth:
-          account,
-      });
+      // Keep SMTP connections controlled
+      pool: true,
+      maxConnections: 2,
+      maxMessages: 50,
+    });
   } else {
     const testAccount =
       await nodemailer.createTestAccount();
 
     account = {
-      user:
-        testAccount.user,
-
-      pass:
-        testAccount.pass,
+      user: testAccount.user,
+      pass: testAccount.pass,
     };
 
-    transporter =
-      nodemailer.createTransport({
-        host:
-          testAccount.smtp.host,
+    transporter = nodemailer.createTransport({
+      host: testAccount.smtp.host,
+      port: testAccount.smtp.port,
+      secure: testAccount.smtp.secure,
 
-        port:
-          testAccount.smtp.port,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
 
-        secure:
-          testAccount.smtp.secure,
+      connectionTimeout: 30000,
+      greetingTimeout: 30000,
+      socketTimeout: 60000,
 
-        auth: {
-          user:
-            testAccount.user,
-
-          pass:
-            testAccount.pass,
-        },
-      });
+      pool: true,
+      maxConnections: 2,
+      maxMessages: 50,
+    });
 
     console.log(
       `Ethereal test account: ${testAccount.user}`
@@ -99,17 +92,10 @@ export async function sendEmail(
 
   const info =
     await transport.sendMail({
-      from:
-        params.from,
-
-      to:
-        params.to,
-
-      subject:
-        params.subject,
-
-      html:
-        params.html,
+      from: params.from,
+      to: params.to,
+      subject: params.subject,
+      html: params.html,
 
       headers: {
         'X-ReachInbox-Idempotency-Key':
@@ -118,14 +104,11 @@ export async function sendEmail(
     });
 
   const preview =
-    nodemailer.getTestMessageUrl(
-      info
-    ) || undefined;
+    nodemailer.getTestMessageUrl(info) ||
+    undefined;
 
   return {
-    messageId:
-      info.messageId,
-
+    messageId: info.messageId,
     preview,
   };
 }
