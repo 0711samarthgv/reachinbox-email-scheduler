@@ -780,8 +780,8 @@ COOKIE_NAME=reachinbox_session
 FRONTEND_URL=http://localhost:5173
 API_URL=http://localhost:4000
 
-ELASTICSEARCH_URL=your_elasticsearch_url
-ELASTICSEARCH_API_KEY=your_elasticsearch_api_key
+ELASTICSEARCH_URL=can't be disposed
+ELASTICSEARCH_API_KEY=can't be disposed
 ELASTICSEARCH_INDEX=emails
 
 ETHEREAL_HOST=smtp.ethereal.email
@@ -789,8 +789,8 @@ ETHEREAL_PORT=587
 ETHEREAL_USER=your_ethereal_user
 ETHEREAL_PASSWORD=your_ethereal_password
 
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CLIENT_ID=can't be disposed
+GOOGLE_CLIENT_SECRET=can't be disposed
 GOOGLE_CALLBACK_URL=http://localhost:4000/api/auth/google/callback
 
 SLACK_CLIENT_ID=your_slack_client_id
