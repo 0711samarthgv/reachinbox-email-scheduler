@@ -551,7 +551,7 @@ export function Compose({
               onChange={(e) =>
                 setBody(e.target.value)
               }
-              placeholder="Type Your Reply..."
+              placeholder="Compose Your Mail..."
               className="h-[380px] w-full resize-none outline-none placeholder:text-slate-400"
             />
           </div>
