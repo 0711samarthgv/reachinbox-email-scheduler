@@ -49,6 +49,7 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^24.5.2",
     "@types/nodemailer": "^7.0.1",
+    "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.16",
     "prisma": "^6.16.2",
     "tsx": "^4.20.5",
