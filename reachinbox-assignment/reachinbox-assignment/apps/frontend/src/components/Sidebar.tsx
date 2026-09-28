@@ -57,14 +57,17 @@ export function Sidebar({
   }, []);
 
   /*
-   * Connect Slack.
+   * Connect Slack using the deployed production backend.
    *
-   * We intentionally use the local backend URL here.
-   * This avoids the Vite import.meta.env TypeScript issue.
+   * IMPORTANT:
+   * Replace YOUR-API-RENDER-URL with the URL of your
+   * Express API service on Render.
+   *
+   * Do NOT use the BullMQ worker URL here.
    */
   const connectSlack = () => {
     window.location.href =
-      'http://localhost:4000/api/slack/oauth/start';
+      'https://YOUR-API-RENDER-URL.onrender.com/api/slack/oauth/start';
   };
 
   /*
@@ -89,10 +92,7 @@ export function Sidebar({
       <div className="mt-7 flex items-center justify-between rounded-[20px] bg-[#f3f6f4] px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
           <img
-            src={
-              user?.avatarUrl ||
-              'https://i.pravatar.cc/80'
-            }
+            src={user?.avatarUrl || 'https://i.pravatar.cc/80'}
             alt="Profile"
             className="h-10 w-10 rounded-full object-cover"
           />
@@ -108,10 +108,7 @@ export function Sidebar({
           </div>
         </div>
 
-        <ChevronDown
-          size={19}
-          className="text-slate-500"
-        />
+        <ChevronDown size={19} className="text-slate-500" />
       </div>
 
       {/* COMPOSE */}
