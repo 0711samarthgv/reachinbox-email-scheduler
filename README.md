@@ -8,7 +8,8 @@ The application provides persistent email scheduling, distributed rate limiting,
 
 - **Frontend:** Vercel — https://reachinbox-brown-five.vercel.app/app
 - **Backend API:** Render
-- **Background Worker:** Separate Render service running BullMQ
+- **Background Worker:** Voroa Background Worker running BullMQ
+- **Email delivery:** Ethereal SMTP through the Voroa-hosted worker
 
 **Microsoft Edge is recommended for the best application demonstration experience.**
 
@@ -42,12 +43,13 @@ The application provides persistent email scheduling, distributed rate limiting,
               │ PostgreSQL │ │    Redis     │
               │ Source of  │ │ BullMQ Queue │
               │ Truth      │ │ Rate Limits  │
-              └────────────┘ │ Pacing       │
-                             └──────┬───────┘
+              │            │ │ Pacing       │
+              └────────────┘ └──────┬───────┘
                                     │ BullMQ
                                     ▼
                          ┌─────────────────────┐
-                         │    Email Worker     │
+                         │      Voroa          │
+                         │ Background Worker   │
                          │ Concurrency         │
                          │ Retry / Backoff     │
                          │ Idempotency         │
@@ -457,110 +459,89 @@ React/Vite frontend:
 
 Express + TypeScript REST API.
 
-### Background Worker — Render
+### Background Worker — Voroa
 
-Runs:
+The production BullMQ worker runs as a **Voroa Background Worker**.
 
-```bash
-npm --workspace apps/backend run start:worker:web
-```
-
-A lightweight `/health` endpoint allows the worker to run as a Render Web Service.
-
-The health server does not process email requests.
-
-## Current Zero-Cost SMTP Limitation
-
-The project is designed to use free hosting tiers where possible.
-
-Render Free web services block outbound SMTP connections on:
-
-```text
-25
-465
-587
-```
-
-Ethereal SMTP uses:
-
-```text
-smtp.ethereal.email
-Port 587
-STARTTLS
-```
-
-Therefore:
-
-```text
-Render Free Worker
-       │
-       │ SMTP :587
-       X
-       │
-Ethereal SMTP
-```
-
-results in a `Connection timeout`.
-
-This is a **hosting-platform restriction**, not a failure of the application's scheduling, queueing, rate-limiting or worker architecture.
-
-The following components continue to function independently:
-
-```text
-Google OAuth
-Dashboard
-Campaign creation
-PostgreSQL persistence
-Redis
-BullMQ scheduling
-Delayed jobs
-Worker processing
-Retries
-Concurrency
-Rate limiting
-Sender pacing
-Idempotency
-Elasticsearch
-Slack
-```
-
-## Zero-Cost Ethereal Demonstration
-
-Because the assignment requires Ethereal SMTP and Render Free cannot connect to SMTP port 587, the worker can be run locally for the final SMTP demonstration.
-
-```text
-                         CLOUD
-                           │
-              ┌────────────┴────────────┐
-              │                         │
-           Vercel                    Render
-           Frontend                    API
-                                         │
-                                  PostgreSQL / Redis
-                                         │
-                                    BullMQ Jobs
-                                         │
-                                         ▼
-                                LOCAL COMPUTER
-                                         │
-                                  BullMQ Worker
-                                         │
-                                         ▼
-                                  Ethereal SMTP
-                                       :587
-```
-
-Run:
+Voroa is connected to the same GitHub repository and runs:
 
 ```bash
-npm --workspace apps/backend run dev:worker
+npm --workspace apps/backend run start:worker
 ```
 
-The local worker uses the same queue, worker logic and Ethereal credentials.
+The worker is deployed independently from the Render API and does not require a public HTTP port.
 
-This keeps the Ethereal demonstration at **zero additional hosting cost**.
+The Voroa worker uses the same PostgreSQL and Redis infrastructure as the Render API through their **external connection URLs**.
 
-Alternatively, the worker can be moved to a paid compute instance where outbound SMTP is permitted.
+Production flow:
+
+```text
+Vercel Frontend
+      │
+      ▼
+Render API
+      │
+      ├──────────────► PostgreSQL
+      │
+      └──────────────► Redis / BullMQ
+                              │
+                              ▼
+                       Voroa Worker
+                              │
+                              ▼
+                       Ethereal SMTP
+```
+
+### Voroa Worker Configuration
+
+```text
+Service type: Background Worker
+Repository: 0711samarthgv/reachinbox-email-scheduler
+Branch: main
+Root directory: /reachinbox-assignment/reachinbox-assignment
+
+Start command:
+npm --workspace apps/backend run start:worker
+```
+
+The current assignment deployment uses Voroa's free background-worker instance.
+
+Runtime environment variables include the production PostgreSQL, Redis, Elasticsearch, Ethereal and worker configuration values. Secrets are injected at runtime and are not committed to GitHub.
+
+Because Voroa runs outside Render's private network, the worker uses the **external Render PostgreSQL and Redis connection URLs**. Render Redis external access must allow the worker's external connection.
+
+### Verified Production Email Flow
+
+The deployed worker has been verified to process BullMQ jobs and successfully connect to Ethereal SMTP.
+
+Example production worker logs:
+
+```text
+Sent <job-id> -> <recipient> (https://ethereal.email/message/...)
+Job completed <job-id>
+```
+
+Multiple test jobs were successfully sent and completed through the Voroa worker.
+
+This confirms the production path:
+
+```text
+Vercel
+  ↓
+Render API
+  ↓
+PostgreSQL + Redis
+  ↓
+BullMQ
+  ↓
+Voroa Background Worker
+  ↓
+Nodemailer
+  ↓
+Ethereal SMTP :587
+```
+
+Ethereal provides a preview URL for each captured message. It is a test/sandbox SMTP service and does not deliver messages to real recipient inboxes.
 
 ## Ethereal SMTP
 
@@ -822,14 +803,13 @@ BULL_BOARD_PASSWORD=your_password
 10. Open **Scheduled** and verify persisted rows.
 11. Open **Bull Board** and show delayed/waiting jobs.
 12. Demonstrate persisted scheduling and background processing.
-13. Run the worker locally for the zero-cost Ethereal SMTP demonstration.
-14. Open the Ethereal preview URL and show the generated message.
-15. Verify the email becomes **Sent**.
-16. Search by recipient, subject or body and demonstrate Elasticsearch.
-17. Connect Slack.
-18. Configure a deliberately small hourly limit.
-19. Demonstrate rescheduling and Slack notification.
-20. Show BullMQ retry/failure handling if required.
+13. Open the Ethereal preview URL from the Voroa worker log and show the generated message.
+14. Verify the email becomes **Sent**.
+15. Search by recipient, subject or body and demonstrate Elasticsearch.
+16. Connect Slack.
+17. Configure a deliberately small hourly limit.
+18. Demonstrate rescheduling and Slack notification.
+19. Show BullMQ retry/failure handling if required.
 
 # Assignment Requirement Mapping
 
@@ -876,9 +856,9 @@ BULL_BOARD_PASSWORD=your_password
 | Error states | Frontend |
 | Private GitHub repository | GitHub |
 | Docker | Docker Compose |
-| Deployment | Vercel + Render |
+| Deployment | Vercel + Render + Voroa |
 | Persistent database | PostgreSQL |
-| Background worker | Separate BullMQ worker |
+| Background worker | Voroa Background Worker |
 
 # Project Structure
 
@@ -986,32 +966,34 @@ The application includes:
 
 # Health and Graceful Shutdown
 
-Worker health endpoint:
+The production worker runs as a Voroa Background Worker and does not require a public HTTP health endpoint.
+
+The worker is designed to shut down gracefully so active processing can complete before exit.
+
+For the alternative Render Web Service worker implementation, `workerWeb.ts` exposes:
 
 ```text
 GET /health
 ```
 
-The worker is designed to shut down gracefully so active processing can complete before exit.
+That implementation is retained in the repository but is not used by the current production deployment.
 
 # Cost
 
-The project is designed to use free tiers where possible.
+The current assignment deployment is designed to use free tiers where possible.
 
 ```text
 Frontend       → Vercel Free
 Backend API    → Render Free
-Redis          → Free tier
-Database       → Free tier where available
+Redis          → Render Free tier
+Database       → Render Free tier where available
+Email Worker   → Voroa Free Background Worker
 Ethereal       → Free
-Email Worker   → Local for zero-cost Ethereal demo
 ```
 
-The Render Free SMTP restriction prevents the deployed Free worker from connecting directly to Ethereal SMTP on port 587.
+The hosted Voroa worker allows the production deployment to connect to Ethereal SMTP on port 587 without relying on Render Free's outbound SMTP connectivity.
 
-Running the worker locally keeps the Ethereal demonstration at zero additional hosting cost.
-
-A paid worker can alternatively be used when unrestricted outbound SMTP connectivity is required.
+A paid worker/compute service can alternatively be used for higher production capacity.
 
 # Production Recommendations
 
@@ -1062,7 +1044,7 @@ Google OAuth
 Ethereal SMTP
 ```
 
-The architecture separates the frontend, API, persistent database, Redis queue, background worker and external integrations.
+The architecture separates the frontend, API, persistent database, Redis queue, Voroa-hosted background worker and external integrations.
 
 The system supports:
 
@@ -1085,6 +1067,6 @@ The system supports:
 - 1000+ independent email jobs.
 - Graceful worker shutdown.
 
-The current Render Free SMTP restriction is an infrastructure limitation affecting only the final Ethereal SMTP connection. The worker can be run locally to demonstrate the complete Ethereal email flow at zero additional cost.
+The current production deployment uses a Voroa Background Worker for BullMQ processing and Ethereal SMTP delivery. Render remains the API/database/Redis platform, while Voroa runs the long-lived worker outside Render's private network.
 
 **Microsoft Edge is recommended for the best application demonstration experience.**
