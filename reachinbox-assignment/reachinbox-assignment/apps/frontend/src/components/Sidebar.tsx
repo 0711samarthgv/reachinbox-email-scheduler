@@ -67,7 +67,7 @@ export function Sidebar({
    */
   const connectSlack = () => {
     window.location.href =
-      'https://reachinbox-email-scheduler-z16f.onrender.com';
+      'https://reachinbox-email-scheduler-z16f.onrender.com/api/slack/oauth/start';
   };
 
   /*
